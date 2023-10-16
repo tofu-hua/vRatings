@@ -1,0 +1,12 @@
+$output_dat
+           both
+only        Correct InCorrect
+  Correct      3206        25
+  InCorrect      50      1817
+
+$z0
+[1] 2.886751
+
+$pvalue
+[1] 0.001946209
+

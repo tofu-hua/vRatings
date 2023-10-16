@@ -1,0 +1,258 @@
+This directory includes data and python/R code for the following paper:
+
+Hsuan-Fu Hua, Ching-Ju Chang, Tse-Ching Lin and Ruby Chiu-Hsing Weng (2023). "Rating of players by Laplace approximation and dynamic modeling". Accepted by International Journal of Forecasting.
+
+Contents:
+1. Data
+2. Code
+  2.1 vElo.py
+  2.2 optim_Sigma.py 
+  2.3 vGenElo.py
+  2.4 McNemar.R
+  
+  
+=======
+1. Data
+=======
+
+The data format is as follows. Each line represents a match, containing at least the three columns: "winner_name", "loser_name", "surface".
+
+For instance, 
+
+(1) train.csv and test.csv are sample data, where each line contains four columns: "game_id", "winner_name", "loser_name" and "surface";
+
+(2) atp_train.csv and atp_test.csv are ATP men's tennis matches data used in our paper, where each line contains not only "winner_name", "loser_name", "surface", but also "tourney_id", "tourney_name", "tourney_date" and so on. (The ATP data are obtained from https://github.com/JeffSackmann/tennis_atp).
+
+
+==================
+2. code (python/R)
+==================
+
+2.1 vElo.py
+===========
+
+<Description> 
+
+It performs the variance-incorporated Elo system; see Algorithm 1 in the paper. The accuracy rates based on train/test data and the average negative log-likelihood value based on train data are computed for numerous initial sigma values. 
+
+<Usage>
+
+  python3 vElo.py train.csv test.csv value_1 value_2
+
+
+<Input arguments>
+
+  "train.csv": the training data
+
+  "test.csv": the testing data 
+
+  "value1": a number representing the lower bound in standard deviation of strength (corresponding to B in the paper);
+          value1 = 0 means not imposing lower bound
+          
+  "value2": a number representing the reduction factor for variance adjustment (corresponding to 1/A in the paper)
+           
+           
+  With (value1, value2)=(B, 1/A), the variance updating rule is
+
+     (sigma^2)' = max(B^2, sigma^2(1 - A*L)).
+                
+  For instance, (value1, value2) = (80, 5) corresponds to use the following variance updating rule:
+
+     (sigma^2)' = max(80^2, sigma^2(1 - L/5))
+          
+           
+<Examples>
+
+  python3 vElo.py atp_train.csv atp_test.csv 0 1  # corresponds to (A, B) = (1, 0)
+  python3 vElo.py atp_train.csv atp_test.csv 80 3  # corresponds to (A, B) = (1/3, 80)
+  python3 vElo.py atp_train.csv atp_test.csv 80 5  # corresponds to (A, B) = (1/5, 80)
+  
+
+<Outputs>
+
+  The results from "python3 vElo.py atp_train.csv atp_test.csv 0 1"
+are saved to directory OUTPUT_vElo_b0_d1/
+
+  The results from "python3 vElo.py atp_train.csv atp_test.csv 80 3"
+are saved to directory OUTPUT_vElo_b80_d3/
+
+  The results from "python3 vElo.py atp_train.csv atp_test.csv 80 5"
+are saved to directory OUTPUT_vElo_b80_d5/
+
+  Each of the above directories contains 7 files:
+
+  accRate_both.txt
+  accRate_only.txt  
+  errRate.txt
+  Test_both.txt
+  Test_only.txt
+  Train_both.txt
+  Train_only.txt
+
+<Details of outputs>
+
+"accRate_both.txt": It reports accuracy rates based on train/test data and discrepancy based on train/test data and the average negative log-likelihood value for numerous initial sigma values, based on both mean and variance update. For the column (n,a,t), "n" represents the number of matches in test data, "a" is the number of accurately predicted matches in the test data, and "t" is the number of ties. For instance, the 11th row in OUTPUT_vElo_b80_d5/accRate_both.txt gives
+
+   sig, accTrain, accTest, (n,a,t), neg-loglike
+    110, 0.6755,0.6387,(5100, 3256, 2),0.5950   
+
+which means that, when the initial sigma is 110, the accuracy for train data is 0.6755, the accuracy for test data is 0.6387, found by a/(n-t) = 3256/(5100-2) = 0.6387, and the average negative log-likelihood value based on train data is 0.5950. The output displayed on screen shows that the smallest negative log-likelihood value occurs at sigma = 110; so we report (sigma, accuracy, neg-loglike) = (110, 0.6387, 0.5950) in the right panel of Table 3(c) in the paper.
+
+
+"accRate_only.txt": Its contents are similar to accRate_both.txt, but the results are based on only mean update. Note that OUTPUT_vElo_b0_d1/accRate_only.txt, OUTPUT_vElo_b80_d3/accRate_only.txt and OUTPUT_vElo_b80_d5/accRate_only.txt give exactly the same results because 
+the mean-only update rule assumes constant variance, which is not affected by the (A, B) values. The results in accRate_only.txt shows that the smallest neg-loglikelihood values occurs at sigma = 80,
+
+   sig, accTrain, accTest, (n,a,t), neg-loglike
+    80, 0.6737,0.6338,(5100, 3231, 2),0.5958
+
+The values (80, 0.6338, 0.5958) are reported in the left panel of Table 3(a) in the paper.
+
+
+"errRate.txt": It combines the results of (sigma, accTest,neg-loglike) in "accRate_both.txt" and "accRate_only.txt"
+
+
+"Test_both.txt" and "Test_only.txt": They contain details of the updating process for the test data, based on (mean, variance) update and only mean update formulas, respectively. Here the initial sigma value is chosen to be the one with the smallest negative log-likelihood value, as displayed on screen. These files will be used later to conduct McNemar test.
+
+
+"Train_both.txt" and "Train_only.txt": They contain details of the updating process for the train data, based on (mean, variance) update and only mean update formulas, respectively. Here the initial sigma value is chosen to be the one with the smallest negative log-likelihood value, as displayed on screen.
+
+
+2.2 optim_Sigma.py
+=================
+
+<Description>
+
+It minimizes the negative loglikelihood function with respect to the initial variances (var_1, var_2, var_3) and the correlation coefficients (rho_12, rho_13, rho_23).
+
+<Usage>
+
+  python3 optim_Sigma.py train.csv 
+
+<Input arguments> 
+
+  "train.csv": the training data
+  
+<Examples>
+
+  python3 optim_Sigma.py atp_train.csv
+     
+<Outputs>
+
+  The results are saved to optimize.txt. We list a few lines below for illustration.
+	
+	var_1, var_2, var_3, rho_12, rho_13, rho_23, fun_values, niter
+	8393.7022, 9744.3606, 6459.4163, 0.4675, 0.7220, 0.8391, 0.5910,  379\\
+
+
+	bound,  d,var_1, var_2, var_3, rho_12, rho_13, rho_23, fun_values, niter
+	0,  1, 35001.0459, 56187.8840, 35810.8134, 0.3353, 0.5808, 0.7714, 0.5951,  376\\
+	0,  2, 24313.2907, 32249.4213, 22738.7279, 0.4025, 0.6589, 0.8134, 0.5899,  336\\
+	0,  3, 19567.4846, 23903.6315, 17384.8675, 0.4297, 0.6888, 0.8227, 0.5888,  342\\
+	0,  4, 17012.0543, 20205.9786, 14636.6885, 0.4449, 0.7042, 0.8283, 0.5885,  317\\
+	0,  5, 15409.2017, 18108.4931, 12975.0998, 0.4543, 0.7132, 0.8321, 0.5885,  331\\
+	
+ The upper part shows the best parameter values for GenElo Surface model are (var_1, var_2, var_3, rho_12, rho_13, rho_23) = (8393.7022, 9744.3606, 6459.4163, 0.4675, 0.7220, 0.8391). We take these values for GenElo Surface model and report the results in Table 4(a) of the paper. The lower part presents the best parameter values for vGenElo Surface model for a variety of (bound, d) (i.e. (B,1/A)) values. The smallest function value (negative log-likelihood value), found to be around 0.5885, occurs at (A, B) = (1/4, 0), (1/5, 0) and (1/4, 80); we use them for vGenElo Surface algorithm and report the results in Table 4(b).
+
+
+2.3 vGenElo.py
+==============
+
+<Description> 
+
+It performs the variance-incorporated GenElo Surface system; see Algorithm 3 in the paper. The accuracy rates based on train/test data and average negative log-likelihood value based on train data are computed for numerous initial sigma values. 
+
+<Usage>
+
+  python3 vGenElo.py train.csv test.csv value_1 value_2 var_1 var_2 var_3 rho_1 rho_2 rho_3
+
+<Input arguments> 
+
+  "train.csv": the training data
+
+  "test.csv": the testing data 
+
+  "value1": a number representing the lower bound in standard deviation of strength (corresponding to B in the paper);
+          value1 = 0 means not imposing lower bound
+                    
+  "value2": a number representing the reduction factor for variance adjustment (corresponding to 1/A in the paper)
+
+  "var_1": variance for surface 1, in the example it will be Clay Surface
+
+  "var_2": variance for surface 2, in the example it will be Grass Surface
+
+  "var_3": variance for surface 3, in the example it will be Hard Surface
+
+  "rho_1": rho_12, the correlation coefficient between Clay and Grass.
+
+  "rho_2": rho_13, the correlation coefficient between Clay and Hard.
+
+  "rho_3": rho_23, the correlation coefficient between Hard and Grass.
+
+  Here the values "var_1", "var_2", "var_3", "rho_1", "rho_2", "rho_3" are obtained by minimizing the negative log-likelihood function over the train data, obtained from optim_Sigma.py. See optim_Sigma.py described above.
+
+
+<Examples>
+
+   python3 vGenElo.py atp_train.csv atp_test.csv 0 1 8394.224 9734.664 6459.337 0.4675 0.7220 0.8391
+   
+   python3 vGenElo.py atp_train.csv atp_test.csv 80 5 15398.2658 18031.7168 13077.5091 0.4650 0.7115 0.8354
+
+
+<Outputs>
+
+  The results from the above two lines are saved to directories OUTPUT_vGenElo_b0_d1/ and OUTPUT_vGenElo_b80_d5/, respectively.
+  
+  Each directory contains 6 files. 
+
+  accRate_both.txt
+  accRate_only.txt
+  Test_both.txt
+  Test_only.txt
+  Train_both.txt
+  Train_only.txt
+  
+  Results in OUTPUT_vGenElo_b0_d1/accRate_only.txt is reported in Table 4(a) of the paper; results in OUTPUT_vGenElo_b80_d5/accRate_only.txt is reported in the last row of Table 4(b). 
+ 
+ 
+2.4 McNemar.R
+=============
+
+<Description> 
+
+It conducts one-sided McNemar Test for comparing two updating rules.
+
+<Usage> 
+
+  McNemar_1(filename_1, filename_2)
+
+<Input arguments> 
+
+  filename_1: detailed results of the updating process using certain updating rule; e.g. OUTPUT_vElo_b80_d5/Test_only.txt
+  
+  filename_2: detailed results of the updating process using another updating rule; e.g. OUTPUT_vElo_b80_d5/Test_both.txt
+  
+  
+<Examples>
+
+# in R console, do the following commands:
+
+source(McNemar.R)
+
+# the following lines requires OUTPUT_vElo_b80_d5/Test_only.txt 
+# and OUTPUT_vElo_b80_d5/Test_both.txt
+# you may follow the instructions described for vElo.py above
+# or run the following command in R console:
+# system('python3 vElo.py atp_train.csv atp_test.csv 80 5') 
+
+only = read.csv('OUTPUT_vElo_b80_d5/Test_only.txt', header = TRUE)
+both = read.csv('OUTPUT_vElo_b80_d5/Test_both.txt', header = TRUE)
+result = McNemar_1(only, both)
+result
+
+
+<Outputs>
+
+The outputs of the above "result = McNemar_1(only, both)" are result$data, result$z0, and result$pvalue, corresponding to a 2-dimensional contingency table for McNemar test, the z-value for 1-sided McNemar test, and the associated p-value. The z-value and the p-value are reported in Table 6 of the paper.
+
+
+For any questions and comments, please email 111354501@nccu.edu.tw or chweng@nccu.edu.tw.
