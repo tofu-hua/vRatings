@@ -6,4 +6,4 @@ Contents:
 1. Data
 2. Code
 
-Details are in the README.txt in the file.
+Details are in the README file.
