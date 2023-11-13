@@ -183,6 +183,8 @@ def calculate_ratings(winners, losers, surface, var_1, var_2, var_3, rho_12, rho
           new_var[current_loser] = np.array([[max(np.array([par1_i**2]),tmp_l[0])[0]],[max(np.array([par1_i**2]),tmp_l[1])[0]],[max(np.array([par1_i**2]),tmp_l[2])[0]]],dtype = 'float64')         
           prior_var = new_var
         
+        winner_var = new_var[current_winner]
+        loser_var = new_var[current_loser]
         var_w_new = current_surface.dot(winner_var)[0] 
         var_l_new = current_surface.dot(loser_var)[0] 
    
