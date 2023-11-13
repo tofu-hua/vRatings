@@ -172,7 +172,9 @@ def calculate_ratings(winners, losers, surface, var_1, var_2, var_3, rho_12, rho
           new_var[current_winner] = np.array([[max(np.array([par3_i**2]),tmp_w[0])[0]],[max(np.array([par3_i**2]),tmp_w[1])[0]],[max(np.array([par3_i**2]),tmp_w[2])[0]]],dtype = 'float64')
           new_var[current_loser] = np.array([[max(np.array([par3_i**2]),tmp_l[0])[0]],[max(np.array([par3_i**2]),tmp_l[1])[0]],[max(np.array([par3_i**2]),tmp_l[2])[0]]],dtype = 'float64')         
           prior_var = new_var
-        
+
+        winner_var = new_var[current_winner]
+        loser_var = new_var[current_loser]
         var_w_new = current_surface.dot(winner_var)[0] 
         var_l_new = current_surface.dot(loser_var)[0] 
    
@@ -220,7 +222,7 @@ acc_idx_te_only = accTe.index(max(accTe))
 print('sigma with best accuracy in train: %d'%(init_sig[acc_idx_tr_only]))
 print('sigma with best accuracy in test: %d'%(init_sig[acc_idx_te_only]))
 disc_idx_tr_only = discrepancy.index(min(discrepancy))
-print('sigma with smallest neg-loglikelihood in train: %d'%(init_sig[disc_idx_tr_only]))
+print('sigma with smallest discrepancy in train: %d'%(init_sig[disc_idx_tr_only]))
 
 est_mean, est_var, acc_tr, _, discrep = calculate_ratings(winners, losers, surface, init_sig[disc_idx_tr_only]**2, init_sig[disc_idx_tr_only]**2, init_sig[disc_idx_tr_only]**2, **kwarg, mode = 'Train')
 _, _, acc_te, num_te,_ = calculate_ratings(winners_val, losers_val, surface_val, init_sig[disc_idx_tr_only]**2, init_sig[disc_idx_tr_only]**2, init_sig[disc_idx_tr_only]**2, **kwarg, mode = 'Test', prior_mean = est_mean, prior_var = est_var)
@@ -256,7 +258,7 @@ acc1_idx_te_only = accTe1.index(max(accTe1))
 print('sigma with best accuracy in train: %d'%(init_sig[acc1_idx_tr_only]))
 print('sigma with best accuracy in test: %d'%(init_sig[acc1_idx_te_only]))
 disc1_idx_tr_only = discrepancy1.index(min(discrepancy1))
-print('sigma with smallest neg-loglikelihood in train: %d'%(init_sig[disc1_idx_tr_only]))
+print('sigma with smallest discrepancy in train: %d'%(init_sig[disc1_idx_tr_only]))
 
 est_mean, est_var, acc_tr, _, discrep = calculate_ratings(winners, losers, surface, init_sig[disc1_idx_tr_only]**2, init_sig[disc1_idx_tr_only]**2, init_sig[disc1_idx_tr_only]**2, **kwarg, mode = 'Train')
 _, _, acc_te, num_te,_ = calculate_ratings(winners_val, losers_val, surface_val, init_sig[disc1_idx_tr_only]**2, init_sig[disc1_idx_tr_only]**2, init_sig[disc1_idx_tr_only]**2, **kwarg, mode = 'Test', prior_mean = est_mean, prior_var = est_var)
