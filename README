@@ -211,7 +211,7 @@ It performs the variance-incorporated GenElo Surface system; see Algorithm 3 in 
   Train_both.txt
   Train_only.txt
   
-  Results in OUTPUT_vGenElo_b0_d1/accRate_only.txt is reported in Table 4(a) of the paper; results in OUTPUT_vGenElo_b80_d5/accRate_only.txt is reported in the last row of Table 4(b). 
+  Results in OUTPUT_vGenElo_b0_d1/accRate_only.txt is reported in Table 4(a) of the paper; results in OUTPUT_vGenElo_b80_d5/accRate_both.txt is reported in the last row of Table 4(b). 
  
  
 2.4 McNemar.R
